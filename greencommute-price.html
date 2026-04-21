@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GreenCommute</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f4f9f0;color:#1a3a2a}
+:root{
+  --forest:#1a3a2a;--pine:#2d5a3d;--leaf:#3d8b5e;--mint:#5ab585;
+  --lime:#a8e6a3;--cream:#f4f9f0;--mist:#e8f5e0;--stone:#6b7c6e;
+  --shadow:rgba(26,58,42,0.12);--red:#c62828;--orange:#e65100;
+}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--leaf)!important;box-shadow:0 0 0 3px rgba(90,181,133,0.2)}
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+
+/* AUTH */
+#auth-screen{background:linear-gradient(135deg,#1a3a2a,#2d5a3d,#3d8b5e);display:flex;align-items:center;justify-content:center;padding:20px}
+#auth-screen.active{display:flex}
+.auth-box{background:#fff;border-radius:24px;padding:32px 28px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(26,58,42,0.35)}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo .logo-icon{width:48px;height:48px;background:var(--mint);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:8px}
+.auth-logo h1{font-size:24px;color:#fff;margin-bottom:4px}
+.auth-logo p{color:var(--lime);font-size:13px}
+.tab-bar{display:flex;background:var(--mist);border-radius:12px;padding:4px;margin-bottom:22px}
+.tab-btn{flex:1;padding:10px;border:none;border-radius:10px;font-weight:600;font-size:14px;background:transparent;color:var(--stone);transition:all .2s}
+.tab-btn.active{background:var(--leaf);color:#fff}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--pine);margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--mist);border-radius:10px;font-size:14px;color:var(--forest);background:var(--cream)}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,var(--leaf),var(--pine));color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;margin-top:4px}
+.err-msg{background:#fce8e8;color:#c62828;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px}
+.auth-hint{text-align:center;margin-top:14px;font-size:12px;color:var(--stone)}
+.auth-hint code{background:var(--mist);padding:2px 6px;border-radius:4px}
+
+/* LAYOUT */
+#app-screen{display:flex;min-height:100vh}
+#app-screen.active{display:flex}
+.sidebar{position:fixed;top:0;left:-270px;width:256px;height:100vh;background:linear-gradient(180deg,#1a3a2a,#2d5a3d);display:flex;flex-direction:column;z-index:50;transition:left .3s ease;overflow-y:auto}
+.sidebar.open{left:0}
+.sidebar-logo{padding:24px 20px 16px;display:flex;align-items:center;gap:10px}
+.sidebar-logo .icon{width:34px;height:34px;background:var(--mint);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.sidebar-logo span{font-size:17px;font-weight:800;color:#fff}
+.sidebar-user{margin:0 14px 16px;background:rgba(255,255,255,.08);border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:9px}
+.sidebar-user .avatar{width:34px;height:34px;border-radius:50%;background:var(--mint);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+.sidebar-user .uname{color:#fff;font-weight:600;font-size:13px}
+.sidebar-user .urole{color:var(--lime);font-size:11px;opacity:.8}
+.nav-btn{width:100%;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;margin-bottom:3px;background:transparent;color:rgba(255,255,255,.62);font-weight:400;font-size:14px;text-align:left;transition:all .15s}
+.nav-btn:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-btn.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
+.nav-btn .dot{margin-left:auto;width:5px;height:5px;border-radius:3px;background:var(--lime);display:none}
+.nav-btn.active .dot{display:block}
+.nav-area{flex:1;padding:0 10px}
+.logout-area{padding:14px 10px 22px}
+.logout-btn{width:100%;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.55);font-size:14px}
+.topbar{position:fixed;top:0;left:0;right:0;height:54px;background:#fff;box-shadow:0 2px 12px var(--shadow);display:flex;align-items:center;padding:0 14px;z-index:30;justify-content:space-between}
+.topbar .logo-text{font-weight:700;color:var(--forest);font-size:16px}
+.topbar .avatar-sm{width:30px;height:30px;border-radius:50%;background:var(--leaf);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+.menu-btn{background:none;border:none;font-size:22px;color:var(--forest);padding:6px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40}
+.overlay.show{display:block}
+.main-content{flex:1;padding-top:66px;padding-bottom:80px;transition:margin .3s}
+.page-inner{max-width:860px;margin:0 auto;padding:0 16px}
+.page{display:none}
+.page.active{display:block}
+h1.page-title{font-size:clamp(20px,4vw,26px);color:var(--forest);font-weight:800;margin-bottom:4px}
+p.page-sub{color:var(--stone);font-size:14px;margin-bottom:22px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 4px 20px var(--shadow);border:1px solid var(--mist)}
+.stat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
+.stat-val{font-size:26px;font-weight:800;color:var(--forest)}
+.stat-lbl{font-size:12px;color:var(--stone);margin-top:2px}
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+.quick-btn{padding:20px 16px;border:none;border-radius:16px;text-align:left;color:#fff}
+.quick-btn .q-icon{font-size:22px}
+.quick-btn .q-title{font-weight:700;font-size:15px;margin-top:8px}
+.quick-btn .q-sub{font-size:12px;opacity:.8;margin-top:2px}
+
+/* CARDS */
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px var(--shadow);border:1px solid var(--mist);margin-bottom:14px}
+.card-title{font-size:16px;font-weight:700;color:var(--forest);margin-bottom:14px}
+
+/* RIDE ROW */
+.ride-row{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--mist)}
+.ride-row:last-child{border-bottom:none}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--leaf);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;position:relative}
+.verified-dot{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:#1976d2;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff}
+.ride-info{flex:1;min-width:0}
+.ride-driver{font-weight:600;color:var(--forest);font-size:14px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.ride-route{color:var(--stone);font-size:12px;margin-top:2px}
+.ride-meta{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap}
+.ride-meta span{font-size:11px;color:var(--stone)}
+.ride-meta .co2{color:var(--leaf)}
+.ride-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+
+/* PRICE BADGE - NEW */
+.price-tag{background:linear-gradient(135deg,#1a3a2a,#2d5a3d);color:#fff;border-radius:10px;padding:6px 10px;text-align:center;min-width:64px}
+.price-tag .price-amt{font-size:16px;font-weight:800;line-height:1}
+.price-tag .price-lbl{font-size:9px;opacity:.8;margin-top:2px}
+.price-tag.per-km{background:linear-gradient(135deg,#1565c0,#1976d2)}
+.price-tag.free{background:linear-gradient(135deg,#2e7d32,#388e3c)}
+
+/* PRICE PILL on ride card */
+.price-pill{display:inline-flex;align-items:center;gap:4px;background:#fff8e6;color:#b07d00;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;border:1px solid #ffe082}
+.price-pill.per-km-pill{background:#e3f2fd;color:#1565c0;border-color:#90caf9}
+.price-pill.free-pill{background:#e8f5e0;color:#2e7d32;border-color:#a5d6a7}
+
+/* BADGE */
+.badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-pending{background:#fff8e6;color:#b07d00}
+.badge-confirmed{background:#e6f4ea;color:#1e7e34}
+.badge-completed{background:#e8eaf6;color:#3949ab}
+.badge-rejected{background:#fce8e8;color:#c62828}
+.badge-user{background:#e8f5e0;color:#2d5a3d}
+.badge-admin{background:rgba(26,58,42,.15);color:#1a3a2a}
+.badge-verified{background:#e3f2fd;color:#1565c0;font-size:11px;padding:2px 8px}
+
+/* FILTER */
+.filter-bar{background:#fff;border-radius:14px;padding:16px;margin-bottom:18px;box-shadow:0 4px 20px var(--shadow);border:1px solid var(--mist);display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
+.route-map{background:#e8f5e0;border-radius:14px;overflow:hidden;margin-top:14px}
+.action-btns{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.btn-accept{padding:7px 14px;background:var(--leaf);color:#fff;border:none;border-radius:7px;font-weight:600;font-size:12px}
+.btn-reject{padding:7px 14px;background:#fce8e8;color:#c62828;border:none;border-radius:7px;font-weight:600;font-size:12px}
+.btn-complete{padding:7px 14px;background:#e8eaf6;color:#3949ab;border:none;border-radius:7px;font-weight:600;font-size:12px}
+.btn-book{padding:7px 14px;background:var(--leaf);color:#fff;border:none;border-radius:7px;font-weight:600;font-size:12px}
+.btn-chat{padding:7px 14px;background:#e3f2fd;color:#1565c0;border:none;border-radius:7px;font-weight:600;font-size:12px}
+.success-msg{background:#e6f4ea;border:1px solid var(--mint);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:8px;font-size:13px;color:#2d5a3d;font-weight:500;margin-top:12px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--pine);text-transform:uppercase;letter-spacing:.05em;background:var(--mist)}
+.data-table td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--mist)}
+.data-table tr:nth-child(even) td{background:var(--cream)}
+.bar-row{margin-bottom:12px}
+.bar-label{display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px}
+.bar-track{height:7px;background:var(--mist);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--mint),var(--leaf));border-radius:4px}
+.profile-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.avatar-lg{width:50px;height:50px;border-radius:50%;background:var(--leaf);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0}
+
+/* SAFETY */
+.safety-banner{background:linear-gradient(135deg,#1a3a2a,#2d5a3d);border-radius:16px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;color:#fff}
+.safety-banner .shield-icon{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.safety-banner h3{font-size:15px;font-weight:700;margin-bottom:3px}
+.safety-banner p{font-size:12px;opacity:.8;line-height:1.5}
+
+/* SOS */
+.sos-fab{position:fixed;bottom:24px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#c62828,#b71c1c);color:#fff;border:none;border-radius:50%;font-size:12px;font-weight:800;z-index:200;box-shadow:0 4px 20px rgba(198,40,40,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;animation:pulse-sos 2s infinite}
+@keyframes pulse-sos{0%,100%{box-shadow:0 4px 20px rgba(198,40,40,.5)}50%{box-shadow:0 4px 32px rgba(198,40,40,.9),0 0 0 8px rgba(198,40,40,.15)}}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:20px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.sos-header{background:linear-gradient(135deg,#c62828,#b71c1c);padding:22px;text-align:center;color:#fff}
+.sos-header .sos-big{font-size:48px;font-weight:900;letter-spacing:2px}
+.sos-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:18px}
+.sos-btn{padding:16px 10px;border:none;border-radius:12px;font-weight:700;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.sos-btn .sos-icon{font-size:24px}
+.sos-call{background:#fce8e8;color:#c62828}
+.sos-share{background:#e3f2fd;color:#1565c0}
+.sos-police{background:#fff3e0;color:#e65100}
+.sos-safe{background:#e8f5e0;color:#2d5a3d}
+.sos-tip{background:#fff8e6;border-radius:10px;padding:12px 14px;margin:0 18px 18px;font-size:12px;color:#b07d00;line-height:1.6}
+
+/* CHAT */
+.chat-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.chat-item{display:flex;align-items:center;gap:12px;padding:14px;background:#fff;border-radius:14px;box-shadow:0 2px 10px var(--shadow);border:1px solid var(--mist);cursor:pointer}
+.chat-item .chat-avatar{width:44px;height:44px;border-radius:50%;background:var(--leaf);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;position:relative}
+.chat-item .unread-dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;background:#c62828;border-radius:50%;border:2px solid #fff}
+.chat-item .chat-meta{flex:1;min-width:0}
+.chat-item .chat-name{font-weight:600;color:var(--forest);font-size:14px}
+.chat-item .chat-preview{font-size:12px;color:var(--stone);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-item .chat-time{font-size:11px;color:var(--stone)}
+.chat-window{display:none;flex-direction:column;height:calc(100vh - 140px);max-height:600px}
+.chat-window.show{display:flex}
+.chat-header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(135deg,var(--forest),var(--pine));border-radius:14px 14px 0 0;color:#fff}
+.chat-header .back-btn{background:none;border:none;color:#fff;font-size:20px;padding:0;line-height:1}
+.chat-header .ch-avatar{width:36px;height:36px;border-radius:50%;background:var(--mint);color:var(--forest);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+.chat-header .ch-name{font-weight:700;font-size:15px}
+.chat-header .ch-status{font-size:11px;opacity:.8}
+.chat-header .safety-btn{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600}
+.chat-messages{flex:1;overflow-y:auto;padding:14px;background:#f9fef5;display:flex;flex-direction:column;gap:10px;border-left:1px solid var(--mist);border-right:1px solid var(--mist)}
+.msg-row{display:flex;align-items:flex-end;gap:8px}
+.msg-row.mine{flex-direction:row-reverse}
+.msg-bubble{max-width:72%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.5}
+.msg-bubble.other{background:#fff;color:var(--forest);border-radius:16px 16px 16px 4px;box-shadow:0 2px 8px var(--shadow)}
+.msg-bubble.mine{background:linear-gradient(135deg,var(--leaf),var(--pine));color:#fff;border-radius:16px 16px 4px 16px}
+.msg-time{font-size:10px;opacity:.6;margin-top:4px;text-align:right}
+.msg-avatar{width:28px;height:28px;border-radius:50%;background:var(--leaf);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.system-msg{text-align:center;font-size:11px;color:var(--stone);background:var(--mist);padding:6px 14px;border-radius:20px;align-self:center}
+.chat-input-bar{display:flex;gap:8px;padding:12px;background:#fff;border-radius:0 0 14px 14px;border:1px solid var(--mist);border-top:none}
+.chat-input-bar textarea{flex:1;padding:10px 12px;border:1.5px solid var(--mist);border-radius:10px;font-size:14px;resize:none;height:42px;color:var(--forest);background:var(--cream)}
+.send-btn{width:42px;height:42px;background:var(--leaf);color:#fff;border:none;border-radius:10px;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-safety-bar{background:#fff3e0;padding:10px 14px;font-size:12px;color:#e65100;display:flex;align-items:center;gap:8px;border-left:1px solid var(--mist);border-right:1px solid var(--mist)}
+
+/* PRICING PAGE */
+.pricing-hero{background:linear-gradient(135deg,#1a3a2a,#2d5a3d);border-radius:18px;padding:24px 20px;margin-bottom:20px;color:#fff;text-align:center}
+.pricing-hero h2{font-size:20px;font-weight:800;margin-bottom:6px}
+.pricing-hero p{font-size:13px;opacity:.8}
+.price-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.price-type-card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 4px 20px var(--shadow);border:2px solid var(--mist);text-align:center}
+.price-type-card.active-type{border-color:var(--leaf)}
+.price-type-card .pt-icon{font-size:32px;margin-bottom:8px}
+.price-type-card h3{font-size:15px;font-weight:700;color:var(--forest);margin-bottom:4px}
+.price-type-card p{font-size:12px;color:var(--stone)}
+.price-type-card .pt-example{margin-top:10px;background:var(--mist);border-radius:8px;padding:8px;font-size:13px;font-weight:700;color:var(--leaf)}
+
+/* SPLIT FARE */
+.split-card{background:linear-gradient(135deg,#e8f5e0,#f4f9f0);border-radius:16px;padding:18px;border:1px solid var(--leaf);margin-bottom:16px}
+.split-card h3{font-size:15px;font-weight:700;color:var(--forest);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.split-result{background:#fff;border-radius:12px;padding:14px;margin-top:12px;display:flex;align-items:center;justify-content:space-between}
+.split-result .each-price{font-size:24px;font-weight:800;color:var(--leaf)}
+.split-result .save-amt{font-size:12px;color:var(--stone)}
+
+/* PRICE CALCULATOR in offer form */
+.price-calc-box{background:linear-gradient(135deg,#e8f5e0,#f0fff4);border-radius:14px;padding:16px;margin-top:14px;border:1px solid var(--leaf)}
+.price-calc-box h4{font-size:14px;font-weight:700;color:var(--forest);margin-bottom:12px}
+.price-mode-toggle{display:flex;background:var(--mist);border-radius:10px;padding:3px;margin-bottom:12px}
+.price-mode-btn{flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;background:transparent;color:var(--stone);transition:all .2s}
+.price-mode-btn.active{background:#fff;color:var(--forest);box-shadow:0 2px 6px var(--shadow)}
+.estimated-price{background:#fff;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.estimated-price .ep-val{font-size:22px;font-weight:800;color:var(--leaf)}
+.estimated-price .ep-lbl{font-size:12px;color:var(--stone)}
+
+/* VERIFY */
+.verify-card{background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:14px;padding:18px;margin-bottom:16px;border:1px solid #90caf9}
+.verify-card h3{font-size:14px;font-weight:700;color:#1565c0;margin-bottom:8px}
+.verify-steps{display:flex;flex-direction:column;gap:8px}
+.verify-step{display:flex;align-items:center;gap:10px;font-size:13px;color:#1a3a2a}
+.verify-step .step-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.step-done{background:#e6f4ea;color:#2e7d32}
+.step-pending{background:#fff8e6;color:#f57f17}
+.trust-score{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:12px 14px;margin-top:12px}
+.trust-bar-wrap{flex:1;height:8px;background:var(--mist);border-radius:4px;overflow:hidden}
+.trust-bar-fill{height:100%;background:linear-gradient(90deg,#5ab585,#2d5a3d);border-radius:4px}
+.safety-tips{background:#fff;border-radius:14px;padding:16px;border:1px solid var(--mist);box-shadow:0 2px 10px var(--shadow)}
+.safety-tips h3{font-size:14px;font-weight:700;color:var(--forest);margin-bottom:12px}
+.tip-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--mist);font-size:13px;color:#1a3a2a;line-height:1.5}
+.tip-item:last-child{border-bottom:none}
+.tip-item .tip-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+
+@media(min-width:768px){
+  .sidebar{left:0}
+  .topbar{display:none}
+  .overlay{display:none!important}
+  .main-content{padding-top:32px;margin-left:256px}
+}
+</style>
+</head>
+<body>
+
+<!-- SOS FAB -->
+<button class="sos-fab" id="sos-fab" onclick="openSOS()" style="display:none">🆘<span>SOS</span></button>
+
+<!-- SOS MODAL -->
+<div class="modal-overlay" id="sos-modal">
+  <div class="modal-box">
+    <div class="sos-header"><div class="sos-big">🆘 SOS</div><p>Emergency assistance — you are not alone</p></div>
+    <div class="sos-actions">
+      <button class="sos-btn sos-call" onclick="sosAction('call')"><span class="sos-icon">📞</span>Call Emergency<br><small>Dial 112</small></button>
+      <button class="sos-btn sos-share" onclick="sosAction('share')"><span class="sos-icon">📍</span>Share Location<br><small>Send to contacts</small></button>
+      <button class="sos-btn sos-police" onclick="sosAction('police')"><span class="sos-icon">🚔</span>Alert Police<br><small>Send report</small></button>
+      <button class="sos-btn sos-safe" onclick="closeSOS()"><span class="sos-icon">✅</span>I'm Safe<br><small>Cancel SOS</small></button>
+    </div>
+    <div class="sos-tip"><strong>⚡ Quick Safety Tips</strong><br>• Share your live trip with a trusted contact<br>• Stay on the route shown in the app<br>• Trust your instincts — exit safely if uncomfortable</div>
+    <div style="padding:0 18px 18px"><button onclick="closeSOS()" style="width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:10px;font-weight:600;color:#666;font-size:14px">Close</button></div>
+  </div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="screen active">
+  <div>
+    <div class="auth-logo">
+      <div class="logo-icon">🌿</div>
+      <h1>GreenCommute</h1>
+      <p>Share rides. Save the planet. Stay safe.</p>
+    </div>
+    <div class="auth-box">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="tab-btn" onclick="switchAuthTab('signup')">Sign Up</button>
+      </div>
+      <div id="auth-err" class="err-msg" style="display:none"></div>
+      <div id="signup-name" class="form-group" style="display:none"><label>Full Name</label><input id="inp-name" type="text" placeholder="Your Name"/></div>
+      <div class="form-group"><label>Email</label><input id="inp-email" type="email" placeholder="you@example.com"/></div>
+      <div id="signup-phone" class="form-group" style="display:none"><label>Phone</label><input id="inp-phone" type="tel" placeholder="9876543210"/></div>
+      <div class="form-group"><label>Password</label><input id="inp-pass" type="password" placeholder="••••••••"/></div>
+      <button class="btn-primary" onclick="doLogin()">Sign In →</button>
+      <p class="auth-hint">Admin: <code>admin@greencommute.com</code> / any password</p>
+    </div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen" class="screen">
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="icon">🌿</div><span>GreenCommute</span></div>
+    <div class="sidebar-user">
+      <div class="avatar" id="sb-avatar"></div>
+      <div><div class="uname" id="sb-name"></div><div class="urole" id="sb-role"></div></div>
+    </div>
+    <nav class="nav-area" id="nav-area"></nav>
+    <div class="logout-area"><button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button></div>
+  </aside>
+
+  <div class="topbar">
+    <button class="menu-btn" onclick="openSidebar()">☰</button>
+    <span class="logo-text">🌿 GreenCommute</span>
+    <div class="avatar-sm" id="top-avatar"></div>
+  </div>
+
+  <main class="main-content">
+    <div class="page-inner">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <h1 class="page-title" id="dash-welcome"></h1>
+        <p class="page-sub">Your eco-commute overview.</p>
+        <div class="safety-banner">
+          <div class="shield-icon">🛡️</div>
+          <div><h3>You're Protected</h3><p>All riders are ID-verified. SOS button active. Transparent pricing on every ride.</p></div>
+        </div>
+        <div class="stats-grid" id="dash-stats"></div>
+        <div class="quick-grid">
+          <button class="quick-btn" style="background:linear-gradient(135deg,#3d8b5e,#2d5a3d)" onclick="goPage('offer')">
+            <div class="q-icon">➕</div><div class="q-title">Offer a Ride</div><div class="q-sub">Set your price & share</div>
+          </button>
+          <button class="quick-btn" style="background:linear-gradient(135deg,#5ab585,#3d8b5e)" onclick="goPage('find')">
+            <div class="q-icon">🔍</div><div class="q-title">Find a Ride</div><div class="q-sub">Compare prices & book</div>
+          </button>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Rides</div>
+          <div id="dash-rides"></div>
+        </div>
+      </div>
+
+      <!-- FIND RIDE -->
+      <div class="page" id="page-find">
+        <h1 class="page-title">Find a Ride</h1>
+        <p class="page-sub">Compare prices and book eco-friendly rides.</p>
+        <div class="filter-bar">
+          <div class="form-group" style="margin:0"><label>From</label><input id="f-from" type="text" placeholder="Koramangala" oninput="renderFind()"/></div>
+          <div class="form-group" style="margin:0"><label>To</label><input id="f-to" type="text" placeholder="Whitefield" oninput="renderFind()"/></div>
+          <div class="form-group" style="margin:0"><label>Date</label><input id="f-date" type="date" oninput="renderFind()"/></div>
+          <div class="form-group" style="margin:0"><label>Max Price (₹)</label><input id="f-price" type="number" min="0" placeholder="Any" oninput="renderFind()"/></div>
+          <div class="form-group" style="margin:0"><label>Min Seats</label><input id="f-seats" type="number" min="1" placeholder="1" oninput="renderFind()"/></div>
+        </div>
+        <div id="find-booked" style="display:none" class="success-msg">✅ <span id="find-booked-msg"></span></div>
+        <div id="find-map" style="display:none" class="card">
+          <div class="card-title">Route Preview</div>
+          <div id="find-map-svg" class="route-map"></div>
+          <div id="find-fare-breakdown" style="margin-top:14px"></div>
+        </div>
+        <div class="card" style="padding:4px 18px 8px"><div id="find-rides"></div></div>
+      </div>
+
+      <!-- OFFER RIDE -->
+      <div class="page" id="page-offer">
+        <h1 class="page-title">Offer a Ride</h1>
+        <p class="page-sub">Share your commute. Set your price. Go green.</p>
+        <div class="card" style="max-width:680px">
+          <div class="form-grid">
+            <div class="form-group"><label>From</label><input id="o-from" type="text" placeholder="Starting point" oninput="updateOfferPreview()"/></div>
+            <div class="form-group"><label>To</label><input id="o-to" type="text" placeholder="Destination" oninput="updateOfferPreview()"/></div>
+            <div class="form-group"><label>Date</label><input id="o-date" type="date"/></div>
+            <div class="form-group"><label>Time</label><input id="o-time" type="time"/></div>
+            <div class="form-group"><label>Seats Available</label><input id="o-seats" type="number" min="1" max="8" value="2" oninput="updateOfferPreview()"/></div>
+            <div class="form-group"><label>Vehicle Type</label>
+              <select id="o-vehicle" onchange="updateOfferPreview()">
+                <option>Electric Sedan</option><option>Hybrid SUV</option>
+                <option>CNG Hatchback</option><option>Electric SUV</option>
+                <option>Hybrid Sedan</option><option>Electric Hatchback</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- PRICE CALCULATOR -->
+          <div class="price-calc-box">
+            <h4>💰 Set Your Price</h4>
+            <div class="price-mode-toggle">
+              <button class="price-mode-btn active" id="mode-perkm" onclick="setPriceMode('perkm')">📏 Per KM Rate</button>
+              <button class="price-mode-btn" id="mode-fixed" onclick="setPriceMode('fixed')">🔒 Fixed Price</button>
+            </div>
+            <div id="perkm-section">
+              <div class="form-group" style="margin-bottom:8px">
+                <label>Distance (KM)</label>
+                <input id="o-distance" type="number" min="1" placeholder="e.g. 25" oninput="updateOfferPreview()" style="border:1.5px solid var(--mist);border-radius:10px;padding:10px 14px;width:100%;background:var(--cream);font-size:14px"/>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label>Rate per KM (₹) <span style="color:var(--stone);font-weight:400">— suggested: ₹3–₹6/km</span></label>
+                <input id="o-rate" type="number" min="1" value="4" oninput="updateOfferPreview()" style="border:1.5px solid var(--mist);border-radius:10px;padding:10px 14px;width:100%;background:var(--cream);font-size:14px"/>
+              </div>
+            </div>
+            <div id="fixed-section" style="display:none">
+              <div class="form-group" style="margin-bottom:0">
+                <label>Fixed Price per Seat (₹)</label>
+                <input id="o-fixed" type="number" min="0" placeholder="e.g. 150" oninput="updateOfferPreview()" style="border:1.5px solid var(--mist);border-radius:10px;padding:10px 14px;width:100%;background:var(--cream);font-size:14px"/>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:10px;margin-bottom:0">
+              <label>
+                <input type="checkbox" id="o-free" onchange="updateOfferPreview()" style="width:auto;margin-right:6px"/>
+                Offer this ride for FREE 🎁 (community sharing)
+              </label>
+            </div>
+            <div class="estimated-price" id="estimated-price-box">
+              <div><div class="ep-lbl">Price per seat</div><div class="ep-val" id="ep-val">₹0</div></div>
+              <div style="text-align:right"><div class="ep-lbl">Total earnings (all seats)</div><div style="font-size:16px;font-weight:700;color:var(--pine)" id="ep-total">₹0</div></div>
+            </div>
+          </div>
+
+          <div id="offer-map" style="display:none;margin-top:16px">
+            <label style="display:block;font-size:13px;font-weight:600;color:#2d5a3d;margin-bottom:6px">Route Preview</label>
+            <div id="offer-map-svg" class="route-map"></div>
+          </div>
+          <div id="offer-success" class="success-msg" style="display:none">✅ Ride created with pricing! Redirecting…</div>
+          <button class="btn-primary" onclick="createRide()" style="margin-top:18px">Create Ride →</button>
+        </div>
+      </div>
+
+      <!-- MY RIDES -->
+      <div class="page" id="page-my-rides">
+        <h1 class="page-title">My Rides</h1>
+        <p class="page-sub">Manage rides you've offered.</p>
+        <div id="my-rides-list"></div>
+      </div>
+
+      <!-- PRICING PAGE -->
+      <div class="page" id="page-pricing">
+        <h1 class="page-title">💰 Pricing Guide</h1>
+        <p class="page-sub">Understand how ride pricing works on GreenCommute.</p>
+
+        <div class="pricing-hero">
+          <h2>Transparent & Fair Pricing</h2>
+          <p>Drivers set their own price. Riders see it upfront. No hidden charges ever.</p>
+        </div>
+
+        <div class="price-type-grid">
+          <div class="price-type-card active-type">
+            <div class="pt-icon">📏</div>
+            <h3>Per KM Pricing</h3>
+            <p>Price calculated based on distance traveled</p>
+            <div class="pt-example">₹3–₹6 per km</div>
+          </div>
+          <div class="price-type-card">
+            <div class="pt-icon">🔒</div>
+            <h3>Fixed Price</h3>
+            <p>Driver sets a flat rate per seat regardless of distance</p>
+            <div class="pt-example">₹50–₹500 flat</div>
+          </div>
+        </div>
+
+        <!-- Split Fare Calculator -->
+        <div class="split-card">
+          <h3>🧮 Split Fare Calculator</h3>
+          <div class="form-grid">
+            <div class="form-group" style="margin:0">
+              <label style="font-size:13px;font-weight:600;color:var(--pine);margin-bottom:6px;display:block">Total Trip Cost (₹)</label>
+              <input id="sc-total" type="number" placeholder="e.g. 600" oninput="calcSplit()" style="width:100%;padding:10px 14px;border:1.5px solid var(--mist);border-radius:10px;font-size:14px;background:var(--cream)"/>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size:13px;font-weight:600;color:var(--pine);margin-bottom:6px;display:block">Number of People</label>
+              <input id="sc-people" type="number" min="2" max="8" placeholder="e.g. 3" oninput="calcSplit()" style="width:100%;padding:10px 14px;border:1.5px solid var(--mist);border-radius:10px;font-size:14px;background:var(--cream)"/>
+            </div>
+          </div>
+          <div class="split-result" id="split-result" style="display:none">
+            <div>
+              <div style="font-size:12px;color:var(--stone);margin-bottom:4px">Each person pays</div>
+              <div class="each-price" id="split-each">₹0</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:12px;color:var(--stone);margin-bottom:4px">You save vs solo ride</div>
+              <div class="save-amt" id="split-save" style="font-size:16px;font-weight:700;color:#2e7d32">₹0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price comparison -->
+        <div class="card">
+          <div class="card-title">💡 GreenCommute vs Other Transport</div>
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead><tr><th>Transport</th><th>Avg Cost</th><th>CO₂</th><th>Safety</th></tr></thead>
+              <tbody>
+                <tr><td>🌿 GreenCommute</td><td style="color:#2e7d32;font-weight:700">₹30–₹80</td><td style="color:#2e7d32">Very Low</td><td>⭐⭐⭐⭐⭐</td></tr>
+                <tr><td>🚕 Ola/Uber</td><td>₹150–₹400</td><td>Medium</td><td>⭐⭐⭐⭐</td></tr>
+                <tr><td>🛺 Auto</td><td>₹80–₹200</td><td>Medium</td><td>⭐⭐⭐</td></tr>
+                <tr><td>🚌 Bus</td><td>₹15–₹50</td><td>Low</td><td>⭐⭐⭐</td></tr>
+                <tr><td>🚗 Own Car (solo)</td><td>₹200–₹500</td><td>Very High</td><td>⭐⭐⭐⭐</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="card">
+          <div class="card-title">❓ Pricing FAQ</div>
+          <div class="tip-item"><span class="tip-icon">💸</span><div><strong>Does GreenCommute charge a fee?</strong><br>Currently 0% commission during beta. Future: 8–10% platform fee on paid rides only.</div></div>
+          <div class="tip-item"><span class="tip-icon">🎁</span><div><strong>Can I offer free rides?</strong><br>Yes! Many drivers offer free rides for community goodwill. Free rides earn extra trust score points.</div></div>
+          <div class="tip-item"><span class="tip-icon">💳</span><div><strong>How do I pay?</strong><br>Cash directly to driver, or UPI/GPay (future feature). Always confirm payment method in chat.</div></div>
+          <div class="tip-item"><span class="tip-icon">🔄</span><div><strong>Can price be negotiated?</strong><br>Yes — use the in-app chat to discuss pricing with your driver before confirming.</div></div>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="page" id="page-chat">
+        <div id="chat-list-view">
+          <h1 class="page-title">Messages</h1>
+          <p class="page-sub">Chat securely with your ride partners.</p>
+          <div class="safety-banner" style="padding:14px 16px;margin-bottom:16px">
+            <div class="shield-icon" style="width:36px;height:36px;font-size:18px">🔒</div>
+            <div><h3 style="font-size:13px">End-to-End Encrypted</h3><p style="font-size:11px">Messages are private. Never share bank details or OTPs.</p></div>
+          </div>
+          <div class="chat-list" id="chat-list"></div>
+        </div>
+        <div class="chat-window" id="chat-window">
+          <div class="chat-header">
+            <button class="back-btn" onclick="backToList()">←</button>
+            <div class="ch-avatar" id="cw-avatar"></div>
+            <div><div class="ch-name" id="cw-name"></div><div class="ch-status" id="cw-status"></div></div>
+            <button class="safety-btn" onclick="openSOS()">🆘 SOS</button>
+          </div>
+          <div class="chat-safety-bar">⚠️ Never share OTPs, passwords or bank details. Agree on payment method here safely.</div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-input-bar">
+            <textarea id="chat-input" placeholder="Type a message…" onkeydown="chatKeyDown(event)"></textarea>
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAFETY -->
+      <div class="page" id="page-safety">
+        <h1 class="page-title">Safety & Trust</h1>
+        <p class="page-sub">Your protection is built into every ride.</p>
+        <div class="verify-card">
+          <h3>🪪 ID Verification Status</h3>
+          <div class="verify-steps">
+            <div class="verify-step"><div class="step-icon step-done">✅</div><div><strong>Email Verified</strong></div></div>
+            <div class="verify-step"><div class="step-icon step-done">✅</div><div><strong>Phone Verified</strong></div></div>
+            <div class="verify-step"><div class="step-icon step-pending" id="id-step-icon">⏳</div>
+              <div id="id-step-text"><strong>Government ID</strong> — upload Aadhaar/PAN<div style="margin-top:6px"><button onclick="verifyID()" id="verify-id-btn" style="padding:6px 14px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Upload ID →</button></div></div>
+            </div>
+            <div class="verify-step"><div class="step-icon step-pending" id="selfie-step-icon">⏳</div>
+              <div id="selfie-step-text"><strong>Selfie Verification</strong><div style="margin-top:6px"><button onclick="verifySelfie()" id="selfie-btn" style="padding:6px 14px;background:#7b1fa2;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Take Selfie →</button></div></div>
+            </div>
+          </div>
+          <div class="trust-score" style="margin-top:14px">
+            <span style="font-size:13px;font-weight:600;color:#1a3a2a;flex-shrink:0">Trust Score</span>
+            <div class="trust-bar-wrap"><div class="trust-bar-fill" id="trust-bar" style="width:50%"></div></div>
+            <span style="font-size:13px;font-weight:700;color:#3d8b5e" id="trust-pct">50%</span>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:#1565c0;text-align:center" id="verify-badge-status">Complete verification to earn ✅ Verified badge</div>
+        </div>
+        <div class="safety-tips">
+          <h3>🛡️ Safety Guidelines</h3>
+          <div class="tip-item"><span class="tip-icon">💰</span><div><strong>Agree on price before booking</strong> — Check the price shown on ride cards. Use chat to confirm payment method (cash/UPI).</div></div>
+          <div class="tip-item"><span class="tip-icon">👁️</span><div><strong>Check profiles before booking</strong> — Look for verified badges and star ratings.</div></div>
+          <div class="tip-item"><span class="tip-icon">📍</span><div><strong>Share your live trip</strong> — Send real-time location to a trusted contact.</div></div>
+          <div class="tip-item"><span class="tip-icon">🚗</span><div><strong>Verify the vehicle</strong> — Match car model, color and plate before getting in.</div></div>
+          <div class="tip-item"><span class="tip-icon">🆘</span><div><strong>SOS always available</strong> — Red SOS button is visible on every screen.</div></div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-title">📞 Emergency Numbers</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <a href="tel:112" style="display:flex;align-items:center;gap:10px;padding:12px;background:#fce8e8;border-radius:10px;text-decoration:none;color:#c62828"><span style="font-size:22px">🚨</span><div><div style="font-weight:700;font-size:13px">Police/Ambulance</div><div style="font-size:16px;font-weight:800">112</div></div></a>
+            <a href="tel:1091" style="display:flex;align-items:center;gap:10px;padding:12px;background:#fff3e0;border-radius:10px;text-decoration:none;color:#e65100"><span style="font-size:22px">👩</span><div><div style="font-weight:700;font-size:13px">Women Helpline</div><div style="font-size:16px;font-weight:800">1091</div></div></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="page" id="page-profile">
+        <h1 class="page-title">My Profile</h1>
+        <p class="page-sub">Manage your account & vehicle info.</p>
+        <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));max-width:560px" id="profile-stats"></div>
+        <div class="card" style="max-width:560px">
+          <div class="profile-header">
+            <div class="avatar-lg" id="prof-avatar"></div>
+            <div><div style="font-weight:700;font-size:17px;color:#1a3a2a" id="prof-name2"></div><div style="color:#6b7c6e;font-size:13px" id="prof-email2"></div><div style="margin-top:6px" id="prof-verify-badge"></div></div>
+          </div>
+          <div class="form-group"><label>Full Name</label><input id="p-name" type="text"/></div>
+          <div class="form-group"><label>Phone</label><input id="p-phone" type="tel" placeholder="9876543210"/></div>
+          <div class="form-group"><label>Vehicle Details</label><input id="p-vehicle" type="text" placeholder="e.g. Tesla Model 3"/></div>
+          <div class="form-group"><label>Preferred Routes</label><input id="p-routes" type="text" placeholder="e.g. Koramangala → Whitefield"/></div>
+          <div class="form-group"><label>Emergency Contact</label><input id="p-emergency" type="tel" placeholder="Trusted contact number"/></div>
+          <div class="form-group"><label>Preferred Payment Method</label>
+            <select id="p-payment"><option>Cash</option><option>UPI / GPay</option><option>PhonePe</option><option>Paytm</option></select>
+          </div>
+          <div id="prof-success" class="success-msg" style="display:none">✅ Profile saved!</div>
+          <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
+        </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div class="page" id="page-admin">
+        <h1 class="page-title">Admin Panel</h1>
+        <p class="page-sub">Platform management & analytics.</p>
+        <div style="display:flex;gap:7px;margin-bottom:20px;flex-wrap:wrap">
+          <button class="tab-btn active" id="adm-tab-analytics" onclick="switchAdminTab('analytics')" style="flex:none;padding:8px 18px;border-radius:9px">Analytics</button>
+          <button class="tab-btn" id="adm-tab-users" onclick="switchAdminTab('users')" style="flex:none;padding:8px 18px;border-radius:9px">Users</button>
+          <button class="tab-btn" id="adm-tab-rides" onclick="switchAdminTab('rides')" style="flex:none;padding:8px 18px;border-radius:9px">Rides</button>
+          <button class="tab-btn" id="adm-tab-revenue" onclick="switchAdminTab('revenue')" style="flex:none;padding:8px 18px;border-radius:9px">💰 Revenue</button>
+        </div>
+        <div id="adm-analytics"></div>
+        <div id="adm-users" style="display:none"></div>
+        <div id="adm-rides" style="display:none"></div>
+        <div id="adm-revenue" style="display:none"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+let currentUser = null;
+let authMode = 'login';
+let verificationState = { phone: true, id: false, selfie: false };
+let trustScore = 50;
+let priceMode = 'perkm';
+
+let rides = [
+  {id:1,driver:"Priya Sharma",from:"Koramangala",to:"Whitefield",date:"2026-03-12",time:"08:30",seats:3,vehicle:"Electric Sedan",status:"pending",co2:2.4,avatar:"PS",verified:true,rating:4.8,reviews:22,priceType:"perkm",pricePerSeat:120,distance:30,ratePerKm:4},
+  {id:2,driver:"Arjun Mehta",from:"Indiranagar",to:"Electronic City",date:"2026-03-12",time:"09:00",seats:2,vehicle:"Hybrid SUV",status:"confirmed",co2:3.1,avatar:"AM",verified:true,rating:4.6,reviews:15,priceType:"fixed",pricePerSeat:150,distance:25,ratePerKm:6},
+  {id:3,driver:"Sneha Iyer",from:"HSR Layout",to:"MG Road",date:"2026-03-13",time:"07:45",seats:1,vehicle:"CNG Hatchback",status:"pending",co2:1.8,avatar:"SI",verified:false,rating:4.2,reviews:8,priceType:"free",pricePerSeat:0,distance:12,ratePerKm:0},
+  {id:4,driver:"Rahul Nair",from:"Marathahalli",to:"Hebbal",date:"2026-03-13",time:"08:00",seats:4,vehicle:"Electric SUV",status:"completed",co2:2.9,avatar:"RN",verified:true,rating:4.9,reviews:31,priceType:"perkm",pricePerSeat:96,distance:24,ratePerKm:4},
+  {id:5,driver:"Kavya Reddy",from:"JP Nagar",to:"Bannerghatta Road",date:"2026-03-14",time:"09:30",seats:2,vehicle:"Hybrid Sedan",status:"pending",co2:2.2,avatar:"KR",verified:false,rating:4.0,reviews:5,priceType:"fixed",pricePerSeat:80,distance:20,ratePerKm:4},
+];
+
+const mockUsers = [
+  {id:1,name:"Priya Sharma",email:"priya@example.com",phone:"9876543210",vehicle:"Tesla Model 3",routes:"Koramangala → Whitefield",ridesGiven:14,co2Saved:28.4,role:"user",verified:true,rating:4.8,totalEarned:4800},
+  {id:2,name:"Arjun Mehta",email:"arjun@example.com",phone:"9876543211",vehicle:"Toyota Camry Hybrid",routes:"Indiranagar → EC",ridesGiven:9,co2Saved:19.1,role:"user",verified:true,rating:4.6,totalEarned:2700},
+  {id:3,name:"Admin User",email:"admin@greencommute.com",phone:"9876543000",vehicle:"—",routes:"—",ridesGiven:0,co2Saved:0,role:"admin",verified:true,rating:5.0,totalEarned:0},
+];
+
+let chats = {
+  1:{name:"Priya Sharma",avatar:"PS",verified:true,ride:"Koramangala → Whitefield",price:"₹120/seat",messages:[
+    {from:"other",text:"Hi! Your seat is confirmed. I'll be in a white Tesla Model 3 🚗",time:"8:10 AM"},
+    {from:"other",text:"Price is ₹120/seat as shown. Cash or GPay accepted 💳",time:"8:11 AM"},
+    {from:"me",text:"Perfect! I'll pay by GPay. See you at 8:25 AM 🙏",time:"8:15 AM"},
+  ],unread:0},
+  2:{name:"Arjun Mehta",avatar:"AM",verified:true,ride:"Indiranagar → Electronic City",price:"₹150/seat (fixed)",messages:[
+    {from:"other",text:"Hello! Seat confirmed for tomorrow. Fixed price ₹150/seat.",time:"Yesterday"},
+    {from:"me",text:"Noted! Cash payment ok?",time:"Yesterday"},
+    {from:"other",text:"Yes cash is fine! Pickup at Indiranagar metro exit 2 🙌",time:"Yesterday"},
+  ],unread:1},
+};
+let activeChatId = null;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function switchAuthTab(mode){
+  authMode=mode;
+  document.querySelectorAll('.tab-bar .tab-btn').forEach((b,i)=>b.classList.toggle('active',(mode==='login'&&i===0)||(mode==='signup'&&i===1)));
+  document.getElementById('signup-name').style.display=mode==='signup'?'block':'none';
+  document.getElementById('signup-phone').style.display=mode==='signup'?'block':'none';
+  document.querySelector('#auth-screen .btn-primary').textContent=mode==='login'?'Sign In →':'Create Account →';
+  document.getElementById('auth-err').style.display='none';
+}
+
+function doLogin(){
+  const email=document.getElementById('inp-email').value.trim();
+  const pass=document.getElementById('inp-pass').value;
+  const err=document.getElementById('auth-err');
+  if(!email||!pass){err.textContent='Please fill all required fields.';err.style.display='block';return;}
+  if(email==='admin@greencommute.com'){currentUser={...mockUsers[2]};}
+  else{const name=document.getElementById('inp-name').value||'New User';const phone=document.getElementById('inp-phone').value||'';currentUser={id:Date.now(),name,email,phone,vehicle:'',routes:'',ridesGiven:0,co2Saved:0,role:'user',verified:false,rating:0,emergency:'',payment:'Cash',totalEarned:0};}
+  err.style.display='none';startApp();
+}
+
+function doLogout(){
+  currentUser=null;
+  document.getElementById('sos-fab').style.display='none';
+  document.getElementById('auth-screen').classList.add('active');
+  document.getElementById('app-screen').classList.remove('active');
+  document.getElementById('inp-email').value='';
+  document.getElementById('inp-pass').value='';
+}
+
+function startApp(){
+  document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('app-screen').classList.add('active');
+  document.getElementById('sos-fab').style.display='flex';
+  buildNav();updateUserUI();goPage('dashboard');
+}
+
+function initials(name){return name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();}
+function updateUserUI(){
+  document.getElementById('sb-avatar').textContent=initials(currentUser.name);
+  document.getElementById('sb-name').textContent=currentUser.name;
+  document.getElementById('sb-role').textContent=currentUser.role==='admin'?'Administrator':'Member';
+  document.getElementById('top-avatar').textContent=initials(currentUser.name);
+}
+
+function buildNav(){
+  const nav=[
+    {id:'dashboard',label:'Dashboard',icon:'📊'},
+    {id:'find',label:'Find a Ride',icon:'🔍'},
+    {id:'offer',label:'Offer a Ride',icon:'➕'},
+    {id:'my-rides',label:'My Rides',icon:'🚗'},
+    {id:'pricing',label:'Pricing Guide',icon:'💰'},
+    {id:'chat',label:'Messages',icon:'💬'},
+    {id:'safety',label:'Safety & Trust',icon:'🛡️'},
+    {id:'profile',label:'Profile',icon:'👤'},
+    ...(currentUser.role==='admin'?[{id:'admin',label:'Admin Panel',icon:'🔧'}]:[]),
+  ];
+  document.getElementById('nav-area').innerHTML=nav.map(item=>`
+    <button class="nav-btn" id="nav-${item.id}" onclick="goPage('${item.id}')">
+      ${item.icon} ${item.label}<span class="dot"></span>
+    </button>`).join('');
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function goPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const nb=document.getElementById('nav-'+id);if(nb)nb.classList.add('active');
+  closeSidebar();
+  if(id==='dashboard')renderDashboard();
+  if(id==='find')renderFind();
+  if(id==='my-rides')renderMyRides();
+  if(id==='profile')renderProfile();
+  if(id==='admin')renderAdmin();
+  if(id==='chat')renderChatList();
+}
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('show');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+function openSOS(){document.getElementById('sos-modal').classList.add('show');}
+function closeSOS(){document.getElementById('sos-modal').classList.remove('show');}
+function sosAction(type){
+  const msgs={call:'📞 Calling 112…',share:'📍 Sharing location with emergency contacts…',police:'🚔 Alerting nearest police station…'};
+  alert(msgs[type]||'Action triggered');
+  if(type==='call')window.location.href='tel:112';
+}
+
+// ── PRICE HELPERS ─────────────────────────────────────────────────────────────
+function formatPrice(ride){
+  if(ride.priceType==='free') return `<span class="price-pill free-pill">🎁 FREE</span>`;
+  if(ride.priceType==='perkm') return `<span class="price-pill per-km-pill">📏 ₹${ride.pricePerSeat}/seat · ₹${ride.ratePerKm}/km</span>`;
+  return `<span class="price-pill">🔒 ₹${ride.pricePerSeat}/seat (fixed)</span>`;
+}
+
+function priceTag(ride){
+  if(ride.priceType==='free') return `<div class="price-tag free"><div class="price-amt">FREE</div><div class="price-lbl">🎁 community</div></div>`;
+  if(ride.priceType==='perkm') return `<div class="price-tag per-km"><div class="price-amt">₹${ride.pricePerSeat}</div><div class="price-lbl">📏 per seat</div></div>`;
+  return `<div class="price-tag"><div class="price-amt">₹${ride.pricePerSeat}</div><div class="price-lbl">🔒 fixed</div></div>`;
+}
+
+function badge(status){
+  const lbl={pending:'Pending',confirmed:'Confirmed',completed:'Completed',rejected:'Rejected',user:'User',admin:'Admin'};
+  return `<span class="badge badge-${status}">${lbl[status]||status}</span>`;
+}
+
+function routeMapSVG(from,to){
+  return `<svg width="100%" height="160" viewBox="0 0 500 180" xmlns="http://www.w3.org/2000/svg">
+    ${[0,1,2,3,4].map(i=>`<line x1="${i*125}" y1="0" x2="${i*125}" y2="180" stroke="#c8e6c0" stroke-width="1"/>`).join('')}
+    ${[0,1,2].map(i=>`<line x1="0" y1="${i*90}" x2="500" y2="${i*90}" stroke="#c8e6c0" stroke-width="1"/>`).join('')}
+    <path d="M 80,140 C 200,80 320,120 420,50" stroke="#b0d8a0" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="M 80,140 C 200,80 320,120 420,50" stroke="#3d8b5e" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="8 4"/>
+    <circle cx="80" cy="140" r="10" fill="#5ab585" stroke="#fff" stroke-width="2"/>
+    <circle cx="420" cy="50" r="10" fill="#1a3a2a" stroke="#fff" stroke-width="2"/>
+    <text x="80" y="124" text-anchor="middle" fill="#1a3a2a" font-size="12" font-weight="600">${from||'Start'}</text>
+    <text x="420" y="34" text-anchor="middle" fill="#1a3a2a" font-size="12" font-weight="600">${to||'End'}</text>
+    <g transform="translate(50,45)" opacity="0.5"><polygon points="0,-12 7,4 -7,4" fill="#3d8b5e"/><rect x="-2" y="4" width="4" height="5" fill="#4a3728"/></g>
+    <g transform="translate(200,130)" opacity="0.5"><polygon points="0,-12 7,4 -7,4" fill="#3d8b5e"/><rect x="-2" y="4" width="4" height="5" fill="#4a3728"/></g>
+  </svg>`;
+}
+
+// ── RIDE ROW ──────────────────────────────────────────────────────────────────
+function rideRowHTML(r, showBook, showChat){
+  const verBadge=r.verified?'<span style="font-size:10px;background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:10px;font-weight:600">✅ Verified</span>':'';
+  const ratingTxt=r.rating?`⭐ ${r.rating} (${r.reviews})`:'';
+  return `<div class="ride-row">
+    <div class="avatar">${r.avatar}${r.verified?'<div class="verified-dot">✓</div>':''}</div>
+    <div class="ride-info">
+      <div class="ride-driver">${r.driver} ${verBadge}</div>
+      <div class="ride-route">📍 ${r.from} → ${r.to} ${r.distance?`<span style="color:var(--leaf);font-size:11px">(${r.distance} km)</span>`:''}</div>
+      <div style="margin-top:5px">${formatPrice(r)}</div>
+      <div class="ride-meta" style="margin-top:5px">
+        <span>🕐 ${r.time}</span><span>💺 ${r.seats} seats</span>
+        <span class="co2">🌿 ${r.co2}kg CO₂</span>
+        ${ratingTxt?`<span style="color:#f59e0b">${ratingTxt}</span>`:''}
+      </div>
+    </div>
+    <div class="ride-actions">
+      ${priceTag(r)}
+      ${badge(r.status)}
+      ${showBook&&r.status==='pending'?`<button class="btn-book" onclick="bookRide(${r.id})">Book</button>`:''}
+      ${showChat&&r.status==='confirmed'?`<button class="btn-chat" onclick="openChat(${r.id})">💬 Chat</button>`:''}
+    </div>
+  </div>`;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  document.getElementById('dash-welcome').textContent=`Welcome back, ${currentUser.name.split(' ')[0]} 👋`;
+  const totalCO2=rides.reduce((s,r)=>s+parseFloat(r.co2),0);
+  const totalRevenue=rides.filter(r=>r.status==='completed').reduce((s,r)=>s+(r.pricePerSeat||0),0);
+  document.getElementById('dash-stats').innerHTML=[
+    {label:'Total Rides',value:rides.length,icon:'🚗',color:'#3d8b5e'},
+    {label:'CO₂ Saved (kg)',value:totalCO2.toFixed(1),icon:'🌿',color:'#5ab585'},
+    {label:'Avg Price/Seat',value:'₹'+Math.round(rides.filter(r=>r.priceType!=='free').reduce((s,r)=>s+r.pricePerSeat,0)/rides.filter(r=>r.priceType!=='free').length||0),icon:'💰',color:'#b07d00'},
+    {label:'My Rides',value:rides.filter(r=>r.driver===currentUser.name).length,icon:'🗺️',color:'#1a3a2a'},
+  ].map(s=>`<div class="stat-card"><div class="stat-icon" style="background:${s.color}20">${s.icon}</div><div class="stat-val" style="color:${s.color}">${s.value}</div><div class="stat-lbl">${s.label}</div></div>`).join('');
+  document.getElementById('dash-rides').innerHTML=rides.slice(0,4).map(r=>rideRowHTML(r,false,false)).join('');
+}
+
+// ── FIND RIDE ─────────────────────────────────────────────────────────────────
+function renderFind(){
+  const from=(document.getElementById('f-from')||{}).value||'';
+  const to=(document.getElementById('f-to')||{}).value||'';
+  const date=(document.getElementById('f-date')||{}).value||'';
+  const seats=(document.getElementById('f-seats')||{}).value||'';
+  const maxPrice=(document.getElementById('f-price')||{}).value||'';
+  const filtered=rides.filter(r=>{
+    if(from&&!r.from.toLowerCase().includes(from.toLowerCase()))return false;
+    if(to&&!r.to.toLowerCase().includes(to.toLowerCase()))return false;
+    if(date&&r.date!==date)return false;
+    if(seats&&r.seats<parseInt(seats))return false;
+    if(maxPrice&&r.priceType!=='free'&&r.pricePerSeat>parseInt(maxPrice))return false;
+    return true;
+  });
+  const el=document.getElementById('find-rides');if(!el)return;
+  el.innerHTML=filtered.length===0
+    ?'<p style="text-align:center;color:#6b7c6e;padding:28px 0">No rides found. Try adjusting filters.</p>'
+    :filtered.map(r=>`<div onclick="selectRide(${r.id})" style="cursor:pointer">${rideRowHTML(r,true,true)}</div>`).join('');
+}
+
+function selectRide(id){
+  const r=rides.find(x=>x.id===id);if(!r)return;
+  document.getElementById('find-map').style.display='block';
+  document.getElementById('find-map-svg').innerHTML=routeMapSVG(r.from,r.to);
+  const fbd=document.getElementById('find-fare-breakdown');
+  fbd.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:4px">
+    <div style="background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid var(--mist)">
+      <div style="font-size:11px;color:var(--stone)">Price per seat</div>
+      <div style="font-size:20px;font-weight:800;color:var(--leaf)">${r.priceType==='free'?'FREE':'₹'+r.pricePerSeat}</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid var(--mist)">
+      <div style="font-size:11px;color:var(--stone)">Distance</div>
+      <div style="font-size:20px;font-weight:800;color:#1a3a2a">${r.distance||'?'} km</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid var(--mist)">
+      <div style="font-size:11px;color:var(--stone)">Pricing type</div>
+      <div style="font-size:14px;font-weight:700;color:#1565c0;margin-top:4px">${r.priceType==='free'?'🎁 Free':r.priceType==='perkm'?'📏 Per KM':'🔒 Fixed'}</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid var(--mist)">
+      <div style="font-size:11px;color:var(--stone)">vs Ola/Uber</div>
+      <div style="font-size:14px;font-weight:700;color:#2e7d32;margin-top:4px">Save ~₹${Math.max(0,(r.distance||20)*8 - r.pricePerSeat)}</div>
+    </div>
+  </div>`;
+}
+
+function bookRide(id){
+  const r=rides.find(x=>x.id===id);if(!r)return;
+  rides=rides.map(x=>x.id===id?{...x,status:'confirmed'}:x);
+  if(!chats[id]) chats[id]={name:r.driver,avatar:r.avatar,verified:r.verified,ride:`${r.from} → ${r.to}`,price:r.priceType==='free'?'FREE':'₹'+r.pricePerSeat+'/seat',messages:[
+    {from:'other',text:`Hi! Seat confirmed for ${r.from} → ${r.to} on ${r.date} at ${r.time} 🎉`,time:'Just now'},
+    {from:'other',text:`Price: ${r.priceType==='free'?'This ride is FREE! 🎁':'₹'+r.pricePerSeat+' per seat. '+(r.priceType==='perkm'?'(₹'+r.ratePerKm+'/km)':'(Fixed price)')}`,time:'Just now'},
+    {from:'other',text:`Payment accepted: Cash or UPI. I'll be in a ${r.vehicle} 🚗`,time:'Just now'},
+  ],unread:3};
+  document.getElementById('find-booked').style.display='flex';
+  document.getElementById('find-booked-msg').textContent=`Booked! ${r.from} → ${r.to} — ${r.priceType==='free'?'FREE ride 🎁':'₹'+r.pricePerSeat+'/seat'}. Chat with driver to confirm pickup!`;
+  selectRide(id);renderFind();
+}
+
+// ── OFFER RIDE ────────────────────────────────────────────────────────────────
+function setPriceMode(mode){
+  priceMode=mode;
+  document.getElementById('mode-perkm').classList.toggle('active',mode==='perkm');
+  document.getElementById('mode-fixed').classList.toggle('active',mode==='fixed');
+  document.getElementById('perkm-section').style.display=mode==='perkm'?'block':'none';
+  document.getElementById('fixed-section').style.display=mode==='fixed'?'block':'none';
+  updateOfferPreview();
+}
+
+function updateOfferPreview(){
+  const from=document.getElementById('o-from').value;
+  const to=document.getElementById('o-to').value;
+  const seats=parseInt(document.getElementById('o-seats').value)||2;
+  const isFree=document.getElementById('o-free').checked;
+  const mp=document.getElementById('offer-map');
+  if(from&&to){mp.style.display='block';document.getElementById('offer-map-svg').innerHTML=routeMapSVG(from,to);}
+  else mp.style.display='none';
+
+  let pricePerSeat=0;
+  if(!isFree){
+    if(priceMode==='perkm'){
+      const dist=parseInt(document.getElementById('o-distance').value)||0;
+      const rate=parseInt(document.getElementById('o-rate').value)||4;
+      pricePerSeat=dist*rate;
+    } else {
+      pricePerSeat=parseInt(document.getElementById('o-fixed').value)||0;
+    }
+  }
+  document.getElementById('ep-val').textContent=isFree?'FREE':'₹'+pricePerSeat;
+  document.getElementById('ep-total').textContent=isFree?'FREE 🎁':'₹'+(pricePerSeat*seats)+' ('+seats+' seats)';
+}
+
+function createRide(){
+  const from=document.getElementById('o-from').value.trim();
+  const to=document.getElementById('o-to').value.trim();
+  const date=document.getElementById('o-date').value;
+  const time=document.getElementById('o-time').value;
+  const seats=parseInt(document.getElementById('o-seats').value)||2;
+  const vehicle=document.getElementById('o-vehicle').value;
+  const isFree=document.getElementById('o-free').checked;
+  if(!from||!to||!date||!time)return;
+
+  let pricePerSeat=0,distance=0,ratePerKm=0,pt='free';
+  if(!isFree){
+    if(priceMode==='perkm'){
+      distance=parseInt(document.getElementById('o-distance').value)||20;
+      ratePerKm=parseInt(document.getElementById('o-rate').value)||4;
+      pricePerSeat=distance*ratePerKm;pt='perkm';
+    } else {
+      pricePerSeat=parseInt(document.getElementById('o-fixed').value)||0;pt='fixed';
+    }
+  }
+
+  rides=[{id:Date.now(),driver:currentUser.name,avatar:initials(currentUser.name),from,to,date,time,seats,vehicle,status:'pending',co2:(Math.random()*3+1).toFixed(1),verified:currentUser.verified||false,rating:0,reviews:0,priceType:pt,pricePerSeat,distance,ratePerKm},...rides];
+  document.getElementById('offer-success').style.display='flex';
+  setTimeout(()=>{
+    document.getElementById('offer-success').style.display='none';
+    ['o-from','o-to','o-date','o-time'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('o-seats').value='2';
+    document.getElementById('offer-map').style.display='none';
+    document.getElementById('o-free').checked=false;
+    document.getElementById('ep-val').textContent='₹0';
+    document.getElementById('ep-total').textContent='₹0';
+    goPage('my-rides');
+  },2000);
+}
+
+// ── SPLIT FARE CALCULATOR ─────────────────────────────────────────────────────
+function calcSplit(){
+  const total=parseFloat(document.getElementById('sc-total').value)||0;
+  const people=parseInt(document.getElementById('sc-people').value)||2;
+  if(total>0&&people>0){
+    const each=(total/people).toFixed(0);
+    const save=(total-each).toFixed(0);
+    document.getElementById('split-result').style.display='flex';
+    document.getElementById('split-each').textContent='₹'+each;
+    document.getElementById('split-save').textContent='₹'+save+' saved';
+  }
+}
+
+// ── MY RIDES ──────────────────────────────────────────────────────────────────
+function renderMyRides(){
+  const myRides=rides.filter(r=>r.driver===currentUser.name);
+  const el=document.getElementById('my-rides-list');
+  if(myRides.length===0){el.innerHTML='<div class="card" style="text-align:center;padding:40px"><div style="font-size:36px">🚗</div><p style="color:#6b7c6e;margin-top:12px">No rides yet. Offer your first ride!</p></div>';return;}
+  const totalEarned=myRides.filter(r=>r.status==='completed'&&r.priceType!=='free').reduce((s,r)=>s+r.pricePerSeat,0);
+  el.innerHTML=`<div class="card" style="background:linear-gradient(135deg,#e8f5e0,#f4f9f0);display:flex;justify-content:space-around;text-align:center;margin-bottom:16px">
+    <div><div style="font-size:22px;font-weight:800;color:var(--leaf)">₹${totalEarned}</div><div style="font-size:12px;color:var(--stone)">Total Earned</div></div>
+    <div><div style="font-size:22px;font-weight:800;color:var(--forest)">${myRides.length}</div><div style="font-size:12px;color:var(--stone)">Rides Offered</div></div>
+    <div><div style="font-size:22px;font-weight:800;color:#2e7d32">${myRides.filter(r=>r.priceType==='free').length}</div><div style="font-size:12px;color:var(--stone)">Free Rides 🎁</div></div>
+  </div>`+myRides.map(r=>`
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-weight:700;color:#1a3a2a;font-size:15px">${r.from} → ${r.to}</div>
+          <div style="color:#6b7c6e;font-size:12px;margin-top:4px">📅 ${r.date} · 🕐 ${r.time} · 💺 ${r.seats} seats · 🚗 ${r.vehicle}</div>
+          <div style="margin-top:6px">${formatPrice(r)}</div>
+          <div style="color:#3d8b5e;font-size:12px;margin-top:4px">🌿 ${r.co2}kg CO₂ saved</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          ${priceTag(r)}${badge(r.status)}
+        </div>
+      </div>
+      ${r.status==='pending'?`<div class="action-btns">
+        <button class="btn-accept" onclick="updateRide(${r.id},'confirmed')">✅ Accept</button>
+        <button class="btn-reject" onclick="updateRide(${r.id},'rejected')">❌ Reject</button>
+        <button class="btn-complete" onclick="updateRide(${r.id},'completed')">✓ Complete</button>
+      </div>`:''}
+      ${r.status==='confirmed'?`<div class="action-btns"><button class="btn-chat" onclick="goPage('chat')" style="padding:8px 16px">💬 Chat with Rider</button><button class="btn-complete" onclick="updateRide(${r.id},'completed')">✓ Complete</button></div>`:''}
+    </div>`).join('');
+}
+
+function updateRide(id,status){rides=rides.map(r=>r.id===id?{...r,status}:r);renderMyRides();}
+
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+function renderChatList(){
+  document.getElementById('chat-list-view').style.display='block';
+  document.getElementById('chat-window').classList.remove('show');
+  const el=document.getElementById('chat-list');
+  const entries=Object.entries(chats);
+  if(entries.length===0){el.innerHTML='<div style="text-align:center;padding:40px;color:#6b7c6e"><div style="font-size:40px">💬</div><p style="margin-top:12px">No messages yet. Book a ride to start chatting!</p></div>';return;}
+  el.innerHTML=entries.map(([id,c])=>`
+    <div class="chat-item" onclick="openChatById(${id})">
+      <div class="chat-avatar">${c.avatar}${c.unread?'<div class="unread-dot"></div>':''}</div>
+      <div class="chat-meta">
+        <div class="chat-name">${c.name} ${c.verified?'✅':''} <span style="font-size:11px;color:#1565c0;background:#e3f2fd;padding:1px 6px;border-radius:10px">${c.price}</span></div>
+        <div class="chat-preview">🚗 ${c.ride} · ${c.messages[c.messages.length-1]?.text||''}</div>
+      </div>
+      <div>
+        <div class="chat-time">${c.messages[c.messages.length-1]?.time||''}</div>
+        ${c.unread?`<div style="background:#c62828;color:#fff;border-radius:10px;font-size:11px;font-weight:700;padding:1px 6px;text-align:center;margin-top:4px">${c.unread}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function openChat(rideId){
+  if(!chats[rideId]){const r=rides.find(x=>x.id===rideId);if(!r)return;chats[rideId]={name:r.driver,avatar:r.avatar,verified:r.verified,ride:`${r.from} → ${r.to}`,price:r.priceType==='free'?'FREE':'₹'+r.pricePerSeat+'/seat',messages:[{from:'system',text:`Ride confirmed: ${r.from} → ${r.to}`}],unread:0};}
+  goPage('chat');setTimeout(()=>openChatById(rideId),50);
+}
+
+function openChatById(id){
+  activeChatId=id;const c=chats[id];if(!c)return;
+  c.unread=0;
+  document.getElementById('chat-list-view').style.display='none';
+  document.getElementById('chat-window').classList.add('show');
+  document.getElementById('cw-avatar').textContent=c.avatar;
+  document.getElementById('cw-name').textContent=c.name+(c.verified?' ✅':'');
+  document.getElementById('cw-status').textContent=`🚗 ${c.ride} · 💰 ${c.price}`;
+  renderMessages();
+}
+
+function backToList(){activeChatId=null;document.getElementById('chat-list-view').style.display='block';document.getElementById('chat-window').classList.remove('show');renderChatList();}
+
+function renderMessages(){
+  const c=chats[activeChatId];if(!c)return;
+  const el=document.getElementById('chat-messages');
+  el.innerHTML=c.messages.map(m=>{
+    if(m.from==='system')return`<div class="system-msg">🔒 ${m.text}</div>`;
+    const isMe=m.from==='me';
+    const av=isMe?initials(currentUser.name):c.avatar;
+    return`<div class="msg-row ${isMe?'mine':''}">
+      <div class="msg-avatar">${av}</div>
+      <div><div class="msg-bubble ${isMe?'mine':'other'}">${m.text}<div class="msg-time">${m.time}</div></div></div>
+    </div>`;
+  }).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+function sendMessage(){
+  const inp=document.getElementById('chat-input');
+  const text=inp.value.trim();if(!text||!activeChatId)return;
+  const time=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  chats[activeChatId].messages.push({from:'me',text,time});
+  inp.value='';renderMessages();
+  setTimeout(()=>{
+    const replies=["Got it! See you at the pickup point 👍","Sure! Payment confirmed 💰","Thanks for confirming 🙏","I'll be there on time ✅","Cash or GPay both fine 😊"];
+    chats[activeChatId].messages.push({from:'other',text:replies[Math.floor(Math.random()*replies.length)],time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+    renderMessages();
+  },1500);
+}
+function chatKeyDown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+
+// ── SAFETY ────────────────────────────────────────────────────────────────────
+function updateTrustBar(){
+  let score=25;
+  if(verificationState.phone)score+=25;
+  if(verificationState.id)score+=25;
+  if(verificationState.selfie)score+=25;
+  trustScore=score;
+  const bar=document.getElementById('trust-bar');
+  const pct=document.getElementById('trust-pct');
+  const status=document.getElementById('verify-badge-status');
+  if(bar)bar.style.width=score+'%';
+  if(pct)pct.textContent=score+'%';
+  if(status){if(score===100){status.textContent='🎉 Fully Verified! You have the ✅ badge';status.style.color='#2e7d32';}else{status.textContent=`Complete ${Math.round((100-score)/25)} more step(s) to earn ✅ badge`;status.style.color='#1565c0';}}
+}
+
+function verifyID(){
+  const btn=document.getElementById('verify-id-btn');btn.textContent='Verifying…';btn.disabled=true;
+  setTimeout(()=>{verificationState.id=true;document.getElementById('id-step-icon').textContent='✅';document.getElementById('id-step-icon').className='step-icon step-done';document.getElementById('id-step-text').innerHTML='<strong>Government ID</strong> — Verified ✅';currentUser.verified=true;updateTrustBar();},2000);
+}
+function verifySelfie(){
+  const btn=document.getElementById('selfie-btn');btn.textContent='Processing…';btn.disabled=true;
+  setTimeout(()=>{verificationState.selfie=true;document.getElementById('selfie-step-icon').textContent='✅';document.getElementById('selfie-step-icon').className='step-icon step-done';document.getElementById('selfie-step-text').innerHTML='<strong>Selfie</strong> — Face matched ✅';updateTrustBar();},2000);
+}
+
+// ── PROFILE ───────────────────────────────────────────────────────────────────
+function renderProfile(){
+  document.getElementById('prof-avatar').textContent=initials(currentUser.name);
+  document.getElementById('prof-name2').textContent=currentUser.name;
+  document.getElementById('prof-email2').textContent=currentUser.email;
+  document.getElementById('p-name').value=currentUser.name||'';
+  document.getElementById('p-phone').value=currentUser.phone||'';
+  document.getElementById('p-vehicle').value=currentUser.vehicle||'';
+  document.getElementById('p-routes').value=currentUser.routes||'';
+  document.getElementById('p-emergency').value=currentUser.emergency||'';
+  const vb=document.getElementById('prof-verify-badge');
+  if(currentUser.verified||trustScore>=75)vb.innerHTML='<span class="badge badge-verified">✅ Verified Member</span>';
+  else vb.innerHTML='<span style="font-size:12px;color:#6b7c6e">Not verified — <a href="#" onclick="goPage(\'safety\')" style="color:#1565c0">Verify now</a></span>';
+  document.getElementById('profile-stats').innerHTML=[
+    {label:'Rides Given',value:currentUser.ridesGiven||0,icon:'🚗'},
+    {label:'CO₂ Saved',value:(currentUser.co2Saved||0)+'kg',icon:'🌿'},
+    {label:'Total Earned',value:'₹'+(currentUser.totalEarned||0),icon:'💰'},
+  ].map(s=>`<div class="stat-card" style="display:flex;align-items:center;gap:12px"><div class="stat-icon" style="background:#3d8b5e20;margin:0">${s.icon}</div><div><div class="stat-val" style="font-size:18px">${s.value}</div><div class="stat-lbl">${s.label}</div></div></div>`).join('');
+}
+
+function saveProfile(){
+  currentUser.name=document.getElementById('p-name').value||currentUser.name;
+  currentUser.phone=document.getElementById('p-phone').value;
+  currentUser.vehicle=document.getElementById('p-vehicle').value;
+  currentUser.routes=document.getElementById('p-routes').value;
+  currentUser.emergency=document.getElementById('p-emergency').value;
+  updateUserUI();
+  const s=document.getElementById('prof-success');s.style.display='flex';setTimeout(()=>s.style.display='none',2000);
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+let adminTab='analytics';
+function switchAdminTab(t){
+  adminTab=t;
+  ['analytics','users','rides','revenue'].forEach(x=>{
+    document.getElementById('adm-'+x).style.display=x===t?'block':'none';
+    document.getElementById('adm-tab-'+x).classList.toggle('active',x===t);
+  });
+}
+
+function renderAdmin(){
+  const totalCO2=rides.reduce((s,r)=>s+parseFloat(r.co2),0);
+  const byStatus=rides.reduce((a,r)=>({...a,[r.status]:(a[r.status]||0)+1}),{});
+  const totalRevenue=rides.filter(r=>r.priceType!=='free').reduce((s,r)=>s+r.pricePerSeat,0);
+  const freeRides=rides.filter(r=>r.priceType==='free').length;
+  const avgPrice=rides.filter(r=>r.priceType!=='free').length?Math.round(totalRevenue/rides.filter(r=>r.priceType!=='free').length):0;
+
+  document.getElementById('adm-analytics').innerHTML=`
+    <div class="stats-grid" style="margin-bottom:18px">
+      ${[{l:'Total Rides',v:rides.length,c:'#3d8b5e'},{l:'CO₂ Saved',v:totalCO2.toFixed(1)+'kg',c:'#5ab585'},{l:'Total Revenue',v:'₹'+totalRevenue,c:'#b07d00'},{l:'Completed',v:byStatus.completed||0,c:'#3949ab'}]
+        .map(s=>`<div class="stat-card"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title">Ride Status Breakdown</div>
+      ${Object.entries(byStatus).map(([s,c])=>`
+        <div class="bar-row"><div class="bar-label"><span style="text-transform:capitalize;font-weight:500">${s}</span><span>${c}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(c/rides.length)*100}%"></div></div></div>`).join('')}
+    </div>`;
+
+  document.getElementById('adm-users').innerHTML=`
+    <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Verified</th><th>Rating</th><th>Rides</th><th>Earned</th><th>Role</th></tr></thead>
+        <tbody>${mockUsers.map(u=>`<tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="width:28px;height:28px;font-size:10px">${initials(u.name)}</div>${u.name}</div></td>
+          <td>${u.verified?'✅ Yes':'No'}</td><td>⭐ ${u.rating}</td>
+          <td style="font-weight:600">${u.ridesGiven}</td>
+          <td style="color:#2e7d32;font-weight:700">₹${u.totalEarned}</td>
+          <td>${badge(u.role)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div></div>`;
+
+  document.getElementById('adm-rides').innerHTML=`
+    <div class="card" style="padding:4px 18px 8px">${rides.map(r=>rideRowHTML(r,false,false)).join('')}</div>`;
+
+  document.getElementById('adm-revenue').innerHTML=`
+    <div class="stats-grid" style="margin-bottom:18px">
+      ${[{l:'Total Platform Revenue',v:'₹'+totalRevenue,c:'#b07d00'},{l:'Avg Price per Seat',v:'₹'+avgPrice,c:'#3d8b5e'},{l:'Free Rides (goodwill)',v:freeRides,c:'#2e7d32'},{l:'Paid Rides',v:rides.length-freeRides,c:'#1565c0'}]
+        .map(s=>`<div class="stat-card"><div class="stat-val" style="color:${s.c};font-size:20px">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title">💰 Revenue by Pricing Type</div>
+      ${[{l:'Per KM rides',v:rides.filter(r=>r.priceType==='perkm').length,rev:rides.filter(r=>r.priceType==='perkm').reduce((s,r)=>s+r.pricePerSeat,0)},
+         {l:'Fixed price rides',v:rides.filter(r=>r.priceType==='fixed').length,rev:rides.filter(r=>r.priceType==='fixed').reduce((s,r)=>s+r.pricePerSeat,0)},
+         {l:'Free rides',v:freeRides,rev:0}]
+        .map(x=>`<div class="bar-row"><div class="bar-label"><span>${x.l} (${x.v} rides)</span><span style="color:#2e7d32;font-weight:700">₹${x.rev}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${rides.length?x.v/rides.length*100:0}%"></div></div></div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title">📊 Price Distribution</div>
+      <div style="overflow-x:auto"><table class="data-table">
+        <thead><tr><th>Route</th><th>Driver</th><th>Type</th><th>Price/Seat</th><th>Distance</th><th>Status</th></tr></thead>
+        <tbody>${rides.map(r=>`<tr>
+          <td>${r.from} → ${r.to}</td><td>${r.driver}</td>
+          <td>${r.priceType==='free'?'🎁 Free':r.priceType==='perkm'?'📏 Per KM':'🔒 Fixed'}</td>
+          <td style="font-weight:700;color:${r.priceType==='free'?'#2e7d32':'#b07d00'}">${r.priceType==='free'?'FREE':'₹'+r.pricePerSeat}</td>
+          <td>${r.distance||'—'} km</td>
+          <td>${badge(r.status)}</td></tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+}
+</script>
+</body>
+</html>
